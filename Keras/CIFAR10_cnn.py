@@ -33,7 +33,25 @@ print(x_train.shape[1:])
 convolution layer
 		|
 		v
-    Activation
+	Activation
+		|
+		v
+convolution layer
+		|
+		v
+	Activation(relu)
+		|
+		v
+	MaxPooling
+    	|
+    	v
+    Dropout
+    	|
+    	v
+convolution layer
+		|
+		v
+	Activation(relu)
 		|
 		v
 convolution layer
@@ -45,45 +63,25 @@ convolution layer
     MaxPooling
     	|
     	v
-     Dropout
-     	|
-     	v
-
-convolution layer
+    Dropout
+    	|
+    	v
+    Flatten
 		|
 		v
-    Activation(relu)
-		|
-		v
-convolution layer
+	Dense Layer 
 		|
 		v
 	Activation(relu)
 		|
 		v
-    MaxPooling
-    	|
-    	v
-     Dropout
-     	|
-     	v
-
-	 Flatten
+	Dropout
 		|
 		v
-	  Dense
+	Dense Layer
 		|
 		v
-    Activation(relu)
-    	|
-    	v
-     Dropout
-     	|
-     	v
-      Dense
-      	|
-      	v
-    Activation(softmax)
+	Activation(softmax)
 '''
 
 # implemnting above stack into code.

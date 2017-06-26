@@ -114,6 +114,7 @@ model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Dropout(0.25))
 
+
 # conver matrix into a vector by streching it.
 model.add(Flatten())
 # Dense layer is use to collect all the info 

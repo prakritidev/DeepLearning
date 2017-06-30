@@ -7,7 +7,7 @@ Tensorflow: https://github.com/tensorflow/tensorflow/tree/r1.2/tensorflow/exampl
 
 I'm creating creating seperate repository for Keras Documantation:
 
-Link -> https://github.com/Keras-Documentation/Convolution-Neural-Network/tree/master
+Link -> https://github.com/Keras-Documentation
 
 
 

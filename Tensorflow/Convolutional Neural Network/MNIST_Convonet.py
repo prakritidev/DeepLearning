@@ -80,37 +80,49 @@ def bias_variable(shape):
   initial = tf.constant(0.1, shape=shape)
   return tf.Variable(initial)
 
-  def main(_):
+
+def main(_):
   	# Data Import
   	mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot = True)
 
-  	# Create model
-
+  	# Creating placeholder for input image
+  	# placeholder - a value that we'll input when we ask TensorFlow to run a computation.
+  	# This Placeholder will holder the 28 x 28 image flattened into 1 x 728 dimension 
   	x = tf.placeholder(tf.float32, [None, 784])
-
-  	#define loss
+  	# None ->  indicates that the first dimension, corresponding to the batch size, can be of any size
+  	
+  	# creating placeholder holding one-hot 10-dimensional target label 
   	y_ = tf.placeholder(tf.float32, [None, 10])
-
-
+  	
+  	# calling our deepnn function which return convolution layer and keep_probablity
   	y_conv, keep_prob = deepnn(x)
 
+  	# Computes softmax cross entropy between logits and labels
+  	# logits are unscaled log probabilities.
+  	# Cross-entropy can be used as an error measure when a network's outputs can be thought of as representing independent hypotheses
   	cross_entropy = tf.reduce_mean(
       tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
 
   	train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+
   	correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
+
   	accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32)) 
 
   	with tf.Session() as sess:
   		sess.run(tf.global_varaible_initializer())
 
   		for i in range(1000):
+  			# fetching data in batches
   			batch = mnist.train.next_batch(100)
+
   			if i % 100 == 0:
   				train_accuracy = accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0})
   				print('step %d, training accuracy %g' % (i, train_accuracy))
+  				# We train on keep_probabilty of 50 % and dpoping 50 % connection 
+  				# The keep_prob value is used to control the dropout rate used when training the neural network. 
   				train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-
+  		# We evaluate our accuracy on 0 % dropout or we can say 100% keep_prob.		
   		print('test accuracy %g' % accuracy.eval(feed_dict={x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
   		if __name__ == '__main__':
   			parser = argparse.ArgumentParser()
@@ -119,3 +131,5 @@ def bias_variable(shape):
                       help='Directory for storing input data')
   			FLAGS, unparsed = parser.parse_known_args()
   			tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+
+

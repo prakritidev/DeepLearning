@@ -19,13 +19,12 @@ For the most part, this turns out to be a useful thing for smaller datasets
 
 For better inderstanfing of there concpets:
 
-See this Link3
-
-https://iksinc.wordpress.com/2015/04/13/words-as-vectors/
+See this Link- > https://iksinc.wordpress.com/2015/04/13/words-as-vectors/
 
 ************************************************************************************************************************
 
-In this example code tensorflow used 
+In this example code tensorflow used Skip Diagram. 
+
 '''
 
 
@@ -44,7 +43,7 @@ import tensorflow as tf
 # Dataset Download 
 url = 'http://mattmahoney.net/dc/'
 
-# function to download usinf python.
+# <----------------------------------------------------- Download the file from internet ----------------------------------------------------->
 def maybe_download(filename, expected_bytes):
   """Download a file if not present, and make sure it's the right size."""
   if not os.path.exists(filename):
@@ -60,14 +59,18 @@ def maybe_download(filename, expected_bytes):
 
 filename = maybe_download('text8.zip', 31344016)
 
-# Reading data
+# <---------------------------------------------------- Reading data from the file ----------------------------------------------------------->
 
 def read_data(filename):
+
   """Extract the first file enclosed in a zip file as a list of words."""
+
   with zipfile.ZipFile(filename) as f:
     data = tf.compat.as_str(f.read(f.namelist()[0])).split()
   return data
-# vocabulary contain tokenized words.
+
+# <--------------------------------------------------- Building Vocab by tokenization ------------------------------------------------------->
+
 vocabulary = read_data(filename)
 print('Data size', len(vocabulary))
 print('--------Content in vocabulary--------')
@@ -78,8 +81,11 @@ print()
 vocabulary_size = 50000 
 
 # Building dataset and making suitable ofr further process 
+
 def build_dataset(words, n_words):
+
   """Process raw inputs into a dataset."""
+
   count = [['UNK', -1]]
   count.extend(collections.Counter(words).most_common(n_words - 1))
   dictionary = dict()
@@ -108,8 +114,40 @@ print('Sample data', data[:10], [reverse_dictionary[i] for i in data[:10]])
 data_index = 0
 
 # Function to generate a training batch for the skip-gram model.
+# before go through this code you should know how skip-gram model works and the terminologies. 
+# Step 3: Function to generate a training batch for the skip-gram model.
 def generate_batch(batch_size, num_skips, skip_window):
-	
-	global data_index
-	assert batch_size % num_skips == 0  # Need help to understand this step
-	assert num_skips <= 2 * skip_window # 
+  global data_index
+  assert batch_size % num_skips == 0
+  assert num_skips <= 2 * skip_window
+  batch = np.ndarray(shape=(batch_size), dtype=np.int32)
+  labels = np.ndarray(shape=(batch_size, 1), dtype=np.int32)
+  span = 2 * skip_window + 1  # [ skip_window target skip_window ]
+  buffer = collections.deque(maxlen=span)
+  for _ in range(span):
+    buffer.append(data[data_index])
+    data_index = (data_index + 1) % len(data)
+  for i in range(batch_size // num_skips):
+    target = skip_window  # target label at the center of the buffer
+    targets_to_avoid = [skip_window]
+    for j in range(num_skips):
+      while target in targets_to_avoid:
+        target = random.randint(0, span - 1)
+      targets_to_avoid.append(target)
+      batch[i * num_skips + j] = buffer[skip_window]
+      labels[i * num_skips + j, 0] = buffer[target]
+    buffer.append(data[data_index])
+    data_index = (data_index + 1) % len(data)
+  # Backtrack a little bit to avoid skipping words in the end of a batch
+  data_index = (data_index + len(data) - span) % len(data)
+  return batch, labels
+
+
+batch, labels = generate_batch(batch_size=8, num_skips=2, skip_window=1)
+for i in range(8):
+  print(batch[i], reverse_dictionary[batch[i]],
+        '->', labels[i, 0], reverse_dictionary[labels[i, 0]])
+
+
+
+  

@@ -5,9 +5,8 @@ All the codes are available on below link
 
 Tensorflow: https://github.com/tensorflow/tensorflow/tree/r1.2/tensorflow/examples
 
-I'm creating creating seperate repository for Keras Documantation:
 
-Link -> https://github.com/Keras-Documentation
+Keras -> https://github.com/fchollet/keras/tree/master/examples
 
 
 

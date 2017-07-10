@@ -116,31 +116,90 @@ data_index = 0
 # Function to generate a training batch for the skip-gram model.
 # before go through this code you should know how skip-gram model works and the terminologies. 
 # Step 3: Function to generate a training batch for the skip-gram model.
+
+# <--------------------------------------------------- Building Vocab by tokenization ------------------------------------------------------->
+''' 
+function explanation by : Anuj Gupta
+-> https://github.com/anujgupta82
+'''
+num_skips=2 # no of words to be picked from the window
+skip_window=1 #define how much will we see on one side of the word
+batch_size = 16 
+
+data_index = 0 #global circular counter over the data
+
 def generate_batch(batch_size, num_skips, skip_window):
-  global data_index
-  assert batch_size % num_skips == 0
-  assert num_skips <= 2 * skip_window
-  batch = np.ndarray(shape=(batch_size), dtype=np.int32)
-  labels = np.ndarray(shape=(batch_size, 1), dtype=np.int32)
-  span = 2 * skip_window + 1  # [ skip_window target skip_window ]
-  buffer = collections.deque(maxlen=span)
-  for _ in range(span):
-    buffer.append(data[data_index])
-    data_index = (data_index + 1) % len(data)
-  for i in range(batch_size // num_skips):
-    target = skip_window  # target label at the center of the buffer
-    targets_to_avoid = [skip_window]
-    for j in range(num_skips):
-      while target in targets_to_avoid:
-        target = random.randint(0, span - 1)
-      targets_to_avoid.append(target)
-      batch[i * num_skips + j] = buffer[skip_window]
-      labels[i * num_skips + j, 0] = buffer[target]
-    buffer.append(data[data_index])
-    data_index = (data_index + 1) % len(data)
-  # Backtrack a little bit to avoid skipping words in the end of a batch
-  data_index = (data_index + len(data) - span) % len(data)
-  return batch, labels
+    # skip window is the amount of words we're looking at from each side of a given word
+    # creates a single batch
+    
+    global data_index
+
+    # num_skips => # of times we select a random word within the span? so no of picks should be integer
+    assert batch_size % num_skips == 0
+    assert num_skips <= 2 * skip_window # maximum no of samples picked is size of span
+
+    batch = np.ndarray(shape=(batch_size), dtype=np.int32)
+    labels = np.ndarray(shape=(batch_size, 1), dtype=np.int32)
+    
+    # e.g if skip_window = 2 then span = 5
+    # span is the length of the whole frame we are considering for a single word (left + word + right)
+    # skip_window is the length of one side
+    
+    span = 2 * skip_window + 1 # [ span defines the whole window, which is 2 * skip_window + the word itself ]
+    
+    # queue which add and pop at the end
+    buffer = collections.deque(maxlen=span)
+    
+    #print "span = %d" %span
+    
+    #get words starting from index 0 to span
+    for _ in range(span):
+        #print "_ = %d" %_
+        #print "data_index = %d" %data_index
+        buffer.append(data[data_index]) # fill the buffer with elements in window
+        data_index = (data_index + 1) % len(data)  #this is just to circle at the end of text corpus
+
+
+    # num_skips => # of times we select a random word within the span
+    # batch_size (8) and num_skips (2) (4 times)
+    # batch_size (8) and num_skips (1) (8 times)
+    
+    #denotes the number of (input, output) pairs generated from the single window: [skip_window target skip_window]. 
+    #So num_skips restrict the number of context words we would use as output words.
+    
+    #since num_skips = # of elements picked in each window, 
+    # of windows = batch_size // num_skips
+    # we iterate - for each window (i)
+    #                   for each pick in given window
+    #                            fit the pick in the batch
+    
+    # to fit the pick in the batch : jth element in ith pick = i * num_skips + j
+    
+    # from each window, we pick #num_skips elemnts, so to make a batch, how many windows we need ?
+    num_of_windows = batch_size // num_skips 
+    
+    for i in range(num_of_windows):
+        target = skip_window  # target label at the center of the buffer
+        targets_to_avoid = [ skip_window ] # we only need to know the words around a given word, not the word itself
+        
+        for j in range(num_skips):
+            while target in targets_to_avoid:
+                # find a target word that is not the word itself
+                # while loop will keep repeating until the algorithm find a suitable target word
+                target = random.randint(0, span - 1)
+                
+            # add selected target to avoid_list for next time
+            targets_to_avoid.append(target)
+            
+            # e.g. i=0, j=0 => 0; i=0,j=1 => 1; i=1,j=0 => 2
+            batch[i * num_skips + j] = buffer[skip_window] # [skip_window] => middle element
+            labels[i * num_skips + j, 0] = buffer[target]
+            
+        #populate the buffer with elements of next window - which is one elemnt on right
+        buffer.append(data[data_index])
+        data_index = (data_index + 1) % len(data)
+        
+    return batch, labels
 
 
 batch, labels = generate_batch(batch_size=8, num_skips=2, skip_window=1)
